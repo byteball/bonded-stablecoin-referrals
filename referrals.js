@@ -1,0 +1,76 @@
+/*jslint node: true */
+'use strict';
+const conf = require('ocore/conf');
+const db = require('ocore/db');
+const network = require('ocore/network');
+const eventBus = require('ocore/event_bus');
+const validationUtils = require('ocore/validation_utils');
+const dag = require('aabot/dag');
+const { argv } = require('yargs');
+
+
+async function onAAResponse(objAAResponse) {
+	console.log(`onAAResponse`, objAAResponse);
+	if (objAAResponse.bounced)
+		return console.log('bounced trigger');
+	const aa_address = objAAResponse.aa_address;
+	const trigger_address = objAAResponse.trigger_address;
+	const objJoint = await dag.readJoint(objAAResponse.trigger_unit);
+	if (!objJoint)
+		throw Error("no trigger unit? " + objAAResponse.trigger_unit);
+	const dataMessage = objJoint.unit.messages.find(m => m.app === 'data');
+	if (!dataMessage)
+		return console.log(`no data message in trigger ` + objAAResponse.trigger_unit);
+	let ref = dataMessage.payload.ref || null;
+	if (ref && !validationUtils.isValidAddress(ref)) {
+		console.log(`ref ${ref} is not a valid address in trigger ` + objAAResponse.trigger_unit);
+		ref = null;
+	}
+	if (ref === trigger_address) {
+		console.log(`attempt to self-refer by ${ref} in trigger ` + objAAResponse.trigger_unit);
+		ref = null;		
+	}
+	const rows = await db.query("SELECT 1 FROM aa_addresses WHERE address=?", [ref]);
+	if (rows.length > 0) {
+		console.log(`attempt to set an AA as referrer ${ref} in trigger ` + objAAResponse.trigger_unit);
+		ref = null;
+	}
+	await db.query(`INSERT ${db.getIgnore()} INTO users (address, referrer_address, first_unit) VALUES (?, ?, ?)`, [trigger_address, ref, objAAResponse.trigger_unit]);
+}
+
+async function rescan(aas) {
+	console.log('=== will rescan');
+	const rows = await db.query(`SELECT trigger_address, aa_address, trigger_unit FROM aa_responses WHERE aa_address IN(?) AND bounced=0 ORDER BY aa_response_id`, [aas]);
+	for (let row of rows)
+		await onAAResponse(row);
+	console.log('=== done rescanning');
+}
+
+function addCurveAA(aa) {
+	console.log(`will watch for responses from curve AA ${aa}`);
+	eventBus.on('aa_response_from_aa-' + aa, onAAResponse);
+	if (conf.bLight)
+		network.addLightWatchedAa(aa, null, err => {
+			if (err)
+				throw Error(err);
+		});
+}
+
+
+async function start() {
+	if (argv.rescan)
+		await rescan();
+	if (conf.bLight) {
+		eventBus.on("message_for_light", (ws, subject, body) => {
+			switch (subject) {
+				case 'light/aa_response':
+					onAAResponse(body);
+					break;
+			}
+		});
+	}
+}
+
+
+exports.addCurveAA = addCurveAA;
+exports.start = start;

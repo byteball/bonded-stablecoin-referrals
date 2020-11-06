@@ -1,0 +1,1 @@
+*/20 * * * * cd bonded-stablecoin-referrals; node check_daemon.js 1>>~/.config/bonded-stablecoin-referrals/check_daemon.log 2>>~/.config/bonded-stablecoin-referrals/check_daemon.err

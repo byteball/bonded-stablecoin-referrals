@@ -1,0 +1,26 @@
+{
+  "name": "bonded-stablecoin-referrals",
+  "version": "1.0.0",
+  "description": "Bonded stablecoin referrals",
+  "main": "run.js",
+  "repository": "https://github.com/byteball/bonded-stablecoin-referrals.git",
+  "author": "tony",
+  "license": "MIT",
+  "dependencies": {
+    "headless-obyte": "git+https://github.com/byteball/headless-obyte.git",
+    "aabot": "git+https://github.com/byteball/aabot.git",
+    "koa": "2.6.2",
+    "koa-router": "7.4.0",
+    "koa-static": "5.0.0",
+    "koa-views": "6.1.4",
+    "koa-bodyparser": "^4.3.0",
+    "@koa/cors": "^3.1.0",
+    "node-fetch": "^2.6.1",
+		"yargs": "^16.1.0",
+		"cron": "^1.8.2",
+    "ocore": "git+https://github.com/byteball/ocore.git"
+  },
+	"resolutions": {
+		"level-rocksdb": "^4.0.0"
+	}
+}
