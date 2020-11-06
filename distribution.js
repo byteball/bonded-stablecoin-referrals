@@ -5,6 +5,7 @@ const CronJob = require('cron').CronJob;
 const eventBus = require('ocore/event_bus');
 const constants = require('ocore/constants.js');
 const conf = require('ocore/conf.js');
+const desktopApp = require('ocore/desktop_app.js');
 const db = require('ocore/db.js');
 const mutex = require('ocore/mutex.js');
 const headlessWallet = require('headless-obyte');
