@@ -71,9 +71,9 @@ async function updateRewards() {
 	let total_balance = 0; // including unreferred users
 	const rows = await conn.query("SELECT address, referrer_address FROM users");
 	for (let { address, referrer_address } of rows) {
-		let { usd_balance, wallet_balances, aa_balances } = await balances.getBalance(address);
+		let { usd_balance, wallet_balance_details, aa_balance_details } = await balances.getBalance(address);
 		total_balance += usd_balance;
-		await conn.query("INSERT INTO balances (distribution_id, address, usd_balance, details) VALUES (?, ?, ?, ?)", [distribution_id, address, usd_balance, JSON.stringify({wallet_balances, aa_balances})]);
+		await conn.query("INSERT INTO balances (distribution_id, address, usd_balance, details) VALUES (?, ?, ?, ?)", [distribution_id, address, usd_balance, JSON.stringify({ wallet_balance_details, aa_balance_details })]);
 		if (!referrer_address || suspended_referrers.includes(referrer_address))
 			continue;
 		if (!unscaled_rewards[address])

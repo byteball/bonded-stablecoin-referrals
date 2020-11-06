@@ -74,7 +74,7 @@ async function getFullBalances(address) {
 		balances[asset] = balances[asset].stable;
 	console.log(`own balances of ${address}`, JSON.stringify(balances, null, 2));
 	let wallet_balances = _.clone(balances);
-	let aa_balances = balancesInAAs[address];
+	let aa_balances = balancesInAAs[address] || {};
 	for (let asset in aa_balances) {
 		if (!balances[asset])
 			balances[asset] = 0;
@@ -88,16 +88,34 @@ async function getBalance(address) {
 	let usd_balance = 0;
 	const usd_prices = assetPrices.getUsdPrices();
 	const { balances, wallet_balances, aa_balances } = await getFullBalances(address);
+	let wallet_balance_details = {};
+	let aa_balance_details = {};
 	for (let asset in balances) {
 		if (!assets.primaryAssets.includes(asset) && !assets.oswapAssets.includes(asset)) {
 			console.log(`ignoring balance of ${address} in asset ${asset}`);
+			if (wallet_balances[asset])
+				wallet_balance_details[asset] = { balance: wallet_balances[asset], eligible: false };
+			if (aa_balances[asset])
+				aa_balance_details[asset] = { balance: aa_balances[asset], eligible: false };
 			continue;
 		}
 		if (!usd_prices[asset])
 			throw Error(`USD price of asset ${asset} is not known`);
 		usd_balance += balances[asset] * usd_prices[asset];
+		if (wallet_balances[asset])
+			wallet_balance_details[asset] = {
+				balance: wallet_balances[asset],
+				usd_balance: wallet_balances[asset] * usd_prices[asset],
+				eligible: true
+			};
+		if (aa_balances[asset])
+			aa_balance_details[asset] = {
+				balance: aa_balances[asset],
+				usd_balance: aa_balances[asset] * usd_prices[asset],
+				eligible: true
+			};
 	}
-	return { usd_balance, wallet_balances, aa_balances };
+	return { usd_balance, wallet_balance_details, aa_balance_details };
 }
 
 exports.getBalance = getBalance;
