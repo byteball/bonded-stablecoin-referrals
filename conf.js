@@ -58,4 +58,4 @@ exports.max_total_reward = 3000; // USD
 
 exports.max_fee = 1; // in %
 
-exports.webPort = 3000;
+exports.webPort = process.env.testnet ? 3001 : 3000;
