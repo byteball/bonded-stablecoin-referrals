@@ -107,7 +107,14 @@ async function updatePrices() {
 	}
 
 	// convert to USD
-	const gb_rate = await cryptocompare.fetchExchangeRate();
+	try {
+		var gb_rate = await cryptocompare.fetchExchangeRate();
+	}
+	catch (e) {
+		console.log("error from cryptocompare " + e.message);
+		notifications.notifyAdmin("error from cryptocompare", e.message);
+		return false;
+	}
 	for (let asset in gb_prices)
 		usd_prices[asset] = gb_prices[asset] * gb_rate;
 	
