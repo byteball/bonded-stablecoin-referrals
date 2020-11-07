@@ -9,8 +9,8 @@
   "dependencies": {
     "headless-obyte": "git+https://github.com/byteball/headless-obyte.git",
     "aabot": "git+https://github.com/byteball/aabot.git",
-    "koa": "2.6.2",
-    "koa-router": "7.4.0",
+    "koa": "^2.13.0",
+    "koa-router": "^9.4.0",
     "koa-static": "5.0.0",
     "koa-views": "6.1.4",
     "koa-bodyparser": "^4.3.0",
