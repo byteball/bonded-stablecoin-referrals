@@ -30,7 +30,7 @@ router.get('/referrals/:address', async (ctx) => {
 	if (!ValidationUtils.isValidAddress(address))
 		return setError(ctx, "invalid user address");
 	const [{ distribution_id, snapshot_time, distribution_date }] = await db.query(`SELECT distribution_id, snapshot_time, distribution_date FROM distributions ORDER BY distribution_id DESC LIMIT 1`);
-	const [my_info] = await db.query(
+	let [my_info] = await db.query(
 		`SELECT users.address, referrer_address, usd_balance, reward_in_smallest_units, usd_reward, share
 		FROM users 
 		LEFT JOIN rewards ON users.address=rewards.address AND rewards.distribution_id=? 
@@ -38,6 +38,15 @@ router.get('/referrals/:address', async (ctx) => {
 		WHERE users.address=?`,
 		[distribution_id, distribution_id, address]
 	);
+	if (!my_info) {
+		const [my_reward_info] = await db.query(
+			`SELECT address, reward_in_smallest_units, usd_reward, share
+			FROM rewards
+			WHERE address=? AND distribution_id=?`,
+			[address, distribution_id]
+		);
+		my_info = my_reward_info;
+	}
 	const referrals = await db.query(
 		`SELECT users.address, usd_balance, reward_in_smallest_units, usd_reward, share
 		FROM users 
