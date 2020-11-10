@@ -53,9 +53,14 @@ async function updatePrices() {
 			const total_value = balances[reserve_asset] * getAssetGbPrice(reserve_asset) + balances[asset1] * getAssetGbPrice(asset1);
 		
 			const shares_supply = await dag.readAAStateVar(aa, "shares_supply");
-			if (!shares_supply)
+			if (!shares_supply) {
+				if (balances[reserve_asset] && !balances[asset1] && reserve_asset === 'base') {
+					console.log(`shares not issued yet in t1 arb ${aa}`);
+					continue;
+				}
 				throw Error(`no shares supply of t1 arb ${aa}`);
-		
+			}
+
 			gb_prices[shares_asset] = total_value / shares_supply;
 		}
 		else
