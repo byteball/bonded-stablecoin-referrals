@@ -60,18 +60,22 @@ async function updateRewards() {
 
 	await balances.updateBalancesInAAs();
 
-	const conn = db;//await db.takeConnectionFromPool();
-	await conn.query("BEGIN");
-	await conn.query("DELETE FROM balances WHERE distribution_id=?", [distribution_id]);
-	await conn.query("DELETE FROM rewards WHERE distribution_id=?", [distribution_id]);
-
 	const suspended_referrers = await getSuspendedReferrers();
 	let unscaled_rewards = {};
 	let total_unscaled_rewards = 0;
 	let total_balance = 0; // including unreferred users
-	const rows = await conn.query("SELECT address, referrer_address FROM users");
+	let balancesByAddress = {};
+	const rows = await db.query("SELECT address, referrer_address FROM users");
+	for (let { address } of rows)
+		balancesByAddress[address] = await balances.getBalance(address);
+	
+	const conn = await db.takeConnectionFromPool();
+	await conn.query("BEGIN");
+	await conn.query("DELETE FROM balances WHERE distribution_id=?", [distribution_id]);
+	await conn.query("DELETE FROM rewards WHERE distribution_id=?", [distribution_id]);
+
 	for (let { address, referrer_address } of rows) {
-		let { usd_balance, wallet_balance_details, aa_balance_details } = await balances.getBalance(address);
+		let { usd_balance, wallet_balance_details, aa_balance_details } = balancesByAddress[address];
 		total_balance += usd_balance;
 		await conn.query("INSERT INTO balances (distribution_id, address, usd_balance, details) VALUES (?, ?, ?, ?)", [distribution_id, address, usd_balance, JSON.stringify({ wallet_balance_details, aa_balance_details })]);
 		if (!referrer_address || suspended_referrers.includes(referrer_address))
@@ -89,7 +93,7 @@ async function updateRewards() {
 	if (total_unscaled_rewards === 0) {
 		await conn.query("UPDATE distributions SET total_usd_balance=?, total_unscaled_rewards=0, total_rewards=0, snapshot_time=datetime('now') WHERE distribution_id=?", [total_balance, distribution_id]);
 		await conn.query("COMMIT");
-	//	conn.release();
+		conn.release();
 		return finish("no rewards");
 	}
 
@@ -113,7 +117,7 @@ async function updateRewards() {
 	await conn.query("UPDATE distributions SET total_usd_balance=?, total_unscaled_rewards=?, total_rewards=?, snapshot_time=datetime('now') WHERE distribution_id=?", [total_balance, total_unscaled_rewards, total_rewards, distribution_id]);
 	await conn.query("UPDATE distributions SET is_frozen=1 WHERE is_frozen=0 AND distribution_date <= datetime('now')");
 	await conn.query("COMMIT");
-//	conn.release();
+	conn.release();
 	unlock();
 }
 
