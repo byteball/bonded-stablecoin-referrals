@@ -8,6 +8,7 @@ const validationUtils = require('ocore/validation_utils');
 const dag = require('aabot/dag');
 const { argv } = require('yargs');
 
+let aas = [];
 
 async function onAAResponse(objAAResponse) {
 	console.log(`onAAResponse`, objAAResponse);
@@ -38,7 +39,7 @@ async function onAAResponse(objAAResponse) {
 	await db.query(`INSERT ${db.getIgnore()} INTO users (address, referrer_address, first_unit) VALUES (?, ?, ?)`, [trigger_address, ref, objAAResponse.trigger_unit]);
 }
 
-async function rescan(aas) {
+async function rescan() {
 	console.log('=== will rescan');
 	const rows = await db.query(`SELECT trigger_address, aa_address, trigger_unit FROM aa_responses WHERE aa_address IN(?) AND bounced=0 ORDER BY aa_response_id`, [aas]);
 	for (let row of rows)
@@ -48,6 +49,7 @@ async function rescan(aas) {
 
 function addCurveAA(aa) {
 	console.log(`will watch for responses from curve AA ${aa}`);
+	aas.push(aa);
 	eventBus.on('aa_response_from_aa-' + aa, onAAResponse);
 	if (conf.bLight)
 		network.addLightWatchedAa(aa, null, err => {

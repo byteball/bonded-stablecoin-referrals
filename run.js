@@ -15,8 +15,8 @@ const distribution = require('./distribution.js');
 eventBus.on('headless_wallet_ready', async () => {
 	await db_import.initDB();
 	network.start();
-	await referrals.start();
 	await assets.start();
+	await referrals.start();
 //	await assetPrices.updatePrices();
 //	setInterval(20 * 60 * 1000, assetPrices.updatePrices);
 	webserver.start();
