@@ -21,6 +21,7 @@ async function updatePrices() {
 	// stablecoin tokens (T1, T2, stable)
 	try {
 		var trading_data = await (await fetch(conf.assets_data_url)).json();
+		console.log(`got trading data`, JSON.stringify(trading_data, null, 2));
 	}
 	catch (e) {
 		console.log("error when fetching " + e.message);
