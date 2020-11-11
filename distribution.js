@@ -97,7 +97,7 @@ async function updateRewards() {
 		return finish("no rewards");
 	}
 
-	let rewards;
+	let rewards = {};
 	let total_rewards;
 	if (total_unscaled_rewards <= conf.max_total_reward) {
 		total_rewards = total_unscaled_rewards;
