@@ -30,7 +30,8 @@ async function updatePrices() {
 	}
 	for (let symbol in trading_data) {
 		const asset = trading_data[symbol].asset_id;
-		gb_prices[asset] = trading_data[symbol].last_gbyte_value / (10 ** trading_data[symbol].decimals);
+		if (typeof trading_data[symbol].last_gbyte_value === 'number')
+			gb_prices[asset] = trading_data[symbol].last_gbyte_value / (10 ** trading_data[symbol].decimals);
 	}
 	const getAssetGbPrice = (asset) => {
 		if (asset in gb_prices)
