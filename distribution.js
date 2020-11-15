@@ -199,12 +199,13 @@ async function buyRewardAsset(total_rewards) {
 	console.log('buyRewardAsset');
 	const total_rewards_in_smallest_inits = Math.floor(total_rewards * 1e4);
 	const balances = await dag.readBalance(operator.getAddress());
-	const iusd_balance = balances[conf.iusd_asset] ? balances[conf.iusd_asset].total/1e4 : 0;
-	if (Math.round(iusd_balance * 1e4) >= total_rewards_in_smallest_inits) {
+	const iusd_balance_in_smallest_units = balances[conf.iusd_asset] ? balances[conf.iusd_asset].total : 0;
+	if (iusd_balance_in_smallest_units >= total_rewards_in_smallest_inits) {
 		console.log(`have enough IUSD`);
 		return true;
 	}
-	console.log(`have only ${iusd_balance} IUSD, need ${total_rewards}, will buy`);
+	let needed_amount = total_rewards_in_smallest_inits - iusd_balance_in_smallest_units;
+	console.log(`have only ${iusd_balance_in_smallest_units/1e4} IUSD, need ${total_rewards}, will buy`);
 	const rows = await db.query(
 		`SELECT unit
 		FROM units JOIN outputs USING(unit) JOIN unit_authors USING(unit) 
@@ -215,18 +216,24 @@ async function buyRewardAsset(total_rewards) {
 		console.log(`already buying IUSD in unit ${rows[0].unit}`);
 		return false;
 	}
-	const res = await dag.executeGetter(conf.iusd_curve_aa, 'get_exchange_result', [0, total_rewards_in_smallest_inits]);
+	let res = await dag.executeGetter(conf.iusd_curve_aa, 'get_exchange_result', [0, needed_amount]);
 	console.log('expected result', res);
 	if (res.fee_percent > conf.max_fee) {
 		console.log(`fee would be ${res.fee_percent}%`);
-		return false;
+		needed_amount = Math.ceil(needed_amount / 2);
+		res = await dag.executeGetter(conf.iusd_curve_aa, 'get_exchange_result', [0, needed_amount]);
+		console.log('expected result from half purchase', res);
+		if (res.fee_percent > conf.max_fee) {
+			console.log(`fee from half purchase would be ${res.fee_percent}%`);
+			return false;
+		}
 	}
 	// add 1% for volatility
 	const amount = Math.ceil(res.reserve_needed * 1.01);
 	const unit = await dag.sendPayment({
 		to_address: conf.iusd_curve_aa,
 		amount,
-		data: { tokens2: total_rewards_in_smallest_inits },
+		data: { tokens2: needed_amount },
 	});
 	if (!unit) {
 		console.log(`failed to send bytes to curve AA`);
