@@ -137,9 +137,14 @@ async function distributeIfReady() {
 	if (!rows[0])
 		return finish("no distribution ready")
 	const { distribution_id, snapshot_time, total_rewards, bought_reward_asset } = rows[0];
+	if (!total_rewards) { // nothing to distribute
+		await db.query("UPDATE distributions SET is_completed=1 WHERE distribution_id=?", [distribution_id]);
+		return finish("finished empty distribution")		
+	}
 	if (!bought_reward_asset) {
 		console.log("reward asset not bought yet");
-		if (!await buyRewardAsset(total_rewards))
+		const [{ total_rewards_in_smallest_inits }] = await db.query("SELECT SUM(reward_in_smallest_units) AS total_rewards_in_smallest_inits FROM rewards WHERE distribution_id=?", [distribution_id]);
+		if (!await buyRewardAsset(total_rewards_in_smallest_inits))
 			return finish("still buying the reward asset");
 		await db.query("UPDATE distributions SET bought_reward_asset=1 WHERE distribution_id=?", [distribution_id]);		
 	}
@@ -195,9 +200,8 @@ async function createDistributionOutputs(distribution_id, distributionSnapshotDa
 	);
 }
 
-async function buyRewardAsset(total_rewards) {
+async function buyRewardAsset(total_rewards_in_smallest_inits) {
 	console.log('buyRewardAsset');
-	const total_rewards_in_smallest_inits = Math.floor(total_rewards * 1e4);
 	const balances = await dag.readBalance(operator.getAddress());
 	const iusd_balance_in_smallest_units = balances[conf.iusd_asset] ? balances[conf.iusd_asset].total : 0;
 	if (iusd_balance_in_smallest_units >= total_rewards_in_smallest_inits) {
@@ -205,7 +209,7 @@ async function buyRewardAsset(total_rewards) {
 		return true;
 	}
 	let needed_amount = total_rewards_in_smallest_inits - iusd_balance_in_smallest_units;
-	console.log(`have only ${iusd_balance_in_smallest_units/1e4} IUSD, need ${total_rewards}, will buy`);
+	console.log(`have only ${iusd_balance_in_smallest_units/1e4} IUSD, need ${total_rewards_in_smallest_inits/1e4}, will buy`);
 	const rows = await db.query(
 		`SELECT unit
 		FROM units JOIN outputs USING(unit) JOIN unit_authors USING(unit) 
