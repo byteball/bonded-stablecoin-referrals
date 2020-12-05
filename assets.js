@@ -81,7 +81,7 @@ async function addDepositAAs() {
 }
 
 async function addT1ArbAAs() {
-	const rows = await dag.getAAsByBaseAAs([conf.t1_arb_base_aa]);
+	const rows = await dag.getAAsByBaseAAs(conf.t1_arb_base_aas);
 	for (let row of rows)
 		await addT1ArbAA(row.address, row.definition);
 }
@@ -132,7 +132,7 @@ async function start() {
 			await addCurveAA(payload.address);
 		else if (base_aa === conf.deposit_base_aa)
 			await addDepositAA(payload.address);
-		else if (base_aa === conf.t1_arb_base_aa)
+		else if (conf.t1_arb_base_aas.includes(base_aa))
 			await addT1ArbAA(payload.address, payload.definition);
 		else if (base_aa === conf.interest_arb_base_aa)
 			await addInterestArbAA(payload.address, payload.definition);
