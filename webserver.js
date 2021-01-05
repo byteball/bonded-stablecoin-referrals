@@ -9,6 +9,7 @@ const bodyParser = require('koa-bodyparser');
 const ValidationUtils = require('ocore/validation_utils.js');
 const conf = require('ocore/conf.js');
 const db = require('ocore/db.js');
+const assetPrices = require('./asset_prices.js');
 
 const app = new Koa();
 const router = new KoaRouter();
@@ -100,6 +101,15 @@ router.get('/users', async (ctx) => {
 		data: {
 			users,
 		}
+	};
+});
+
+router.get('/prices', async (ctx) => {
+	console.error('prices', ctx.params);
+	const data = assetPrices.getUsdFullPrices();
+	ctx.body = {
+		status: 'success',
+		data
 	};
 });
 

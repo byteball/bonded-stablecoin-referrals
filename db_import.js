@@ -4,7 +4,7 @@ const fs = require('fs');
 const db = require('ocore/db.js');
 
 async function initDB(){
-	const db_sql = fs.readFileSync('db.sql', 'utf8');
+	const db_sql = fs.readFileSync(__dirname + '/db.sql', 'utf8');
 	const queries = db_sql.split('-- query separator');
 
 	for (let sql of queries) {
