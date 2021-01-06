@@ -95,12 +95,14 @@ async function addInterestArbAAs() {
 async function addOswapAAs() {
 	const vars = await dag.readAAStateVars(conf.oswap_factory_aa, 'pools.');
 	for (let var_name in vars) {
-		const asset = vars[var_name];
-		if (!primaryAssets.includes(asset)) {
+		const aa = var_name.substr('pools.'.length, 32);
+		const asset0 = vars[`pools.${aa}.asset0`];
+		const asset1 = vars[`pools.${aa}.asset1`];
+		const asset = vars[`pools.${aa}.asset`];
+		if (!primaryAssets.includes(asset0) && !primaryAssets.includes(asset1)) {
 			console.log(`skipping oswap var ${var_name} as its asset is not a primary asset`);
 			continue;
 		}
-		const aa = var_name.substr('pools.'.length, 32);
 		if (!validationUtils.isValidAddress(aa))
 			throw Error(`bad AA ${aa}`);
 		if (oswapPools[aa]) {
@@ -110,8 +112,8 @@ async function addOswapAAs() {
 		console.log(`adding oswap pool asset ${asset} on AA ${aa}`);
 		oswapAssets.push(asset);
 		oswapPools[aa] = {
-			asset0: vars[`pool.${aa}.asset0`],
-			asset1: vars[`pool.${aa}.asset1`],
+			asset0,
+			asset1,
 			asset,
 		};
 	}
