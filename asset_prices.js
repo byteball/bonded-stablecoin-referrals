@@ -8,13 +8,22 @@ const fetch = require('node-fetch');
 
 const assets = require('./assets.js');
 
-let gb_prices = {};
-let usd_prices = {};
+let usdSmallestUnitPrices = {};
+let usdDisplayPrices = {};
+let gbSmallestUnitPrices = {};
+let gbDisplayPrices = {};
+let unitMultipliers = {};
 
 function getUsdPrices() {
-	if (Object.keys(usd_prices).length === 0)
+	if (Object.keys(usdSmallestUnitPrices).length === 0)
 		throw Error("no USD prices yet");
-	return usd_prices;
+	return usdSmallestUnitPrices;
+}
+
+function getUsdDisplayPrices() {
+	if (Object.keys(usdDisplayPrices).length === 0)
+		throw Error("no USD prices yet");
+	return usdDisplayPrices;
 }
 
 async function updatePrices() {
@@ -30,12 +39,15 @@ async function updatePrices() {
 	}
 	for (let symbol in trading_data) {
 		const asset = trading_data[symbol].asset_id;
-		if (typeof trading_data[symbol].last_gbyte_value === 'number')
-			gb_prices[asset] = trading_data[symbol].last_gbyte_value / (10 ** trading_data[symbol].decimals);
+		unitMultipliers[asset] = 10 ** (trading_data[symbol].decimals || 0);
+		if (typeof trading_data[symbol].last_gbyte_value === 'number') {
+			gbSmallestUnitPrices[asset] = trading_data[symbol].last_gbyte_value / (unitMultipliers[asset] || 1);
+			gbDisplayPrices[asset] = trading_data[symbol].last_gbyte_value;
+		}
 	}
-	const getAssetGbPrice = (asset) => {
-		if (asset in gb_prices)
-			return gb_prices[asset];
+	const getAssetPrice = (asset) => {
+		if (asset in gbSmallestUnitPrices)
+			return gbSmallestUnitPrices[asset];
 		throw Error(`no trading data for asset ${asset}`);
 	}
 
@@ -52,7 +64,7 @@ async function updatePrices() {
 			balances[asset1] = 0;
 		
 		if (balances[reserve_asset] || balances[asset1]) {
-			const total_value = balances[reserve_asset] * getAssetGbPrice(reserve_asset) + balances[asset1] * getAssetGbPrice(asset1);
+			const total_value = balances[reserve_asset] * getAssetPrice(reserve_asset) + balances[asset1] * getAssetPrice(asset1);
 		
 			const shares_supply = await dag.readAAStateVar(aa, "shares_supply");
 			if (!shares_supply) {
@@ -62,11 +74,12 @@ async function updatePrices() {
 				}
 				throw Error(`no shares supply of t1 arb ${aa}`);
 			}
-
-			gb_prices[shares_asset] = total_value / shares_supply;
+			gbSmallestUnitPrices[shares_asset] = total_value / shares_supply;
+			if (unitMultipliers[reserve_asset])
+				gbDisplayPrices[shares_asset] = gbSmallestUnitPrices[shares_asset] * unitMultipliers[reserve_asset];
 		}
 		else
-			gb_prices[shares_asset] = 0;
+			gbDisplayPrices[shares_asset] = gbSmallestUnitPrices[shares_asset] = 0;
 	}
 
 	// interest/stable arbs
@@ -78,23 +91,25 @@ async function updatePrices() {
 		if (balances[interest_asset] !== undefined) {
 		
 			const balance_in_challenging_period = (await dag.readAAStateVar(aa, "balance_in_challenging_period")) || 0;
-			const total_value = (balances[interest_asset] + balance_in_challenging_period) * getAssetGbPrice(interest_asset);
+			const total_value = (balances[interest_asset] + balance_in_challenging_period) * getAssetPrice(interest_asset);
 
 			const shares_supply = await dag.readAAStateVar(aa, "shares_supply");
 			if (!shares_supply)
 				throw Error(`no shares supply of interest arb ${aa}`);
 		
-			gb_prices[shares_asset] = total_value / shares_supply;
+			gbSmallestUnitPrices[shares_asset] = total_value / shares_supply;
+			if (unitMultipliers[interest_asset])
+				gbDisplayPrices[shares_asset] = gbSmallestUnitPrices[shares_asset] * unitMultipliers[interest_asset];
 		}
 		else
-			gb_prices[shares_asset] = 0;
+			gbDisplayPrices[shares_asset] = gbSmallestUnitPrices[shares_asset] = 0;
 	}
 
 	// oswap pool assets
 	for (let aa in assets.oswapPools) {
 		const asset0 = assets.oswapPools[aa].asset0;
 		const asset1 = assets.oswapPools[aa].asset1;
-		const pool_asset = assets.oswapPools[aa].asset;
+		const shares_asset = assets.oswapPools[aa].asset;
 
 		const balances = await dag.readAABalances(aa);
 		if (!balances[asset0] || !balances[asset1]) {
@@ -102,15 +117,15 @@ async function updatePrices() {
 			continue;
 		}
 		
-		const total_pool_value = balances[asset0] * getAssetGbPrice(asset0) + balances[asset1] * getAssetGbPrice(asset1);
-		if (!total_pool_value)
-			throw Error(`total_pool_value of pool ${aa}: ${total_pool_value}`);
+		const total_value = balances[asset0] * getAssetPrice(asset0) + balances[asset1] * getAssetPrice(asset1);
+		if (!total_value)
+			throw Error(`total_value of pool ${aa}: ${total_value}`);
 		
-		const pool_asset_supply = await dag.readAAStateVar(aa, "supply");
-		if (!pool_asset_supply)
-			throw Error(`no supply for pool asset ${pool_asset}`);
+		const shares_supply = await dag.readAAStateVar(aa, "supply");
+		if (!shares_supply)
+			throw Error(`no supply for pool share asset ${shares_asset}`);
 		
-		gb_prices[pool_asset] = total_pool_value / pool_asset_supply;
+		gbDisplayPrices[shares_asset] = gbSmallestUnitPrices[shares_asset] = total_value / shares_supply;
 	}
 
 	// convert to USD
@@ -122,11 +137,14 @@ async function updatePrices() {
 		notifications.notifyAdmin("error from cryptocompare", e.message);
 		return false;
 	}
-	for (let asset in gb_prices)
-		usd_prices[asset] = gb_prices[asset] * gb_rate;
+	for (let asset in gbSmallestUnitPrices)
+		usdSmallestUnitPrices[asset] = gbSmallestUnitPrices[asset] * gb_rate;
+	for (let asset in gbDisplayPrices)
+		usdDisplayPrices[asset] = gbDisplayPrices[asset] * gb_rate;
 	
 	return true;
 }
 
 exports.updatePrices = updatePrices;
 exports.getUsdPrices = getUsdPrices;
+exports.getUsdDisplayPrices = getUsdDisplayPrices;

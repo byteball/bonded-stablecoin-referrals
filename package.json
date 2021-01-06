@@ -16,11 +16,11 @@
     "koa-bodyparser": "^4.3.0",
     "@koa/cors": "^3.1.0",
     "node-fetch": "^2.6.1",
-		"yargs": "^16.1.0",
-		"cron": "^1.8.2",
+    "yargs": "^16.1.0",
+    "cron": "^1.8.2",
     "ocore": "git+https://github.com/byteball/ocore.git"
   },
-	"resolutions": {
-		"level-rocksdb": "^4.0.0"
-	}
+  "resolutions": {
+    "level-rocksdb": "^4.0.0"
+  }
 }
