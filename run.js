@@ -17,8 +17,8 @@ eventBus.on('headless_wallet_ready', async () => {
 	network.start();
 	await assets.start();
 	await referrals.start();
-	await assetPrices.updatePrices();
-	setInterval(assetPrices.updatePrices, 20 * 60 * 1000);
+//	await assetPrices.updatePrices();
+//	setInterval(assetPrices.updatePrices, 20 * 60 * 1000);
 	webserver.start();
 	await distribution.start();
 });
