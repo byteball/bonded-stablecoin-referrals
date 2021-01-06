@@ -8,22 +8,22 @@ const fetch = require('node-fetch');
 
 const assets = require('./assets.js');
 
-let usd_prices = {};
-let usd_full_prices = {};
-let unit_prices = {};
-let full_prices = {};
-let unit_multipliers = {};
+let usdSmallestUnitPrices = {};
+let usdDisplayPrices = {};
+let gbSmallestUnitPrices = {};
+let gbDisplayPrices = {};
+let unitMultipliers = {};
 
 function getUsdPrices() {
-	if (Object.keys(usd_prices).length === 0)
+	if (Object.keys(usdSmallestUnitPrices).length === 0)
 		throw Error("no USD prices yet");
-	return usd_prices;
+	return usdSmallestUnitPrices;
 }
 
-function getUsdFullPrices() {
-	if (Object.keys(usd_full_prices).length === 0)
+function getUsdDisplayPrices() {
+	if (Object.keys(usdDisplayPrices).length === 0)
 		throw Error("no USD prices yet");
-	return usd_full_prices;
+	return usdDisplayPrices;
 }
 
 async function updatePrices() {
@@ -39,15 +39,15 @@ async function updatePrices() {
 	}
 	for (let symbol in trading_data) {
 		const asset = trading_data[symbol].asset_id;
-		unit_multipliers[asset] = 10 ** (trading_data[symbol].decimals || 0);
+		unitMultipliers[asset] = 10 ** (trading_data[symbol].decimals || 0);
 		if (typeof trading_data[symbol].last_gbyte_value === 'number') {
-			unit_prices[asset] = trading_data[symbol].last_gbyte_value / (unit_multipliers[asset] || 1);
-			full_prices[asset] = trading_data[symbol].last_gbyte_value;
+			gbSmallestUnitPrices[asset] = trading_data[symbol].last_gbyte_value / (unitMultipliers[asset] || 1);
+			gbDisplayPrices[asset] = trading_data[symbol].last_gbyte_value;
 		}
 	}
 	const getAssetPrice = (asset) => {
-		if (asset in unit_prices)
-			return unit_prices[asset];
+		if (asset in gbSmallestUnitPrices)
+			return gbSmallestUnitPrices[asset];
 		throw Error(`no trading data for asset ${asset}`);
 	}
 
@@ -74,12 +74,12 @@ async function updatePrices() {
 				}
 				throw Error(`no shares supply of t1 arb ${aa}`);
 			}
-			unit_prices[shares_asset] = total_value / shares_supply;
-			if (unit_multipliers[reserve_asset])
-				full_prices[shares_asset] = unit_prices[shares_asset] * unit_multipliers[reserve_asset];
+			gbSmallestUnitPrices[shares_asset] = total_value / shares_supply;
+			if (unitMultipliers[reserve_asset])
+				gbDisplayPrices[shares_asset] = gbSmallestUnitPrices[shares_asset] * unitMultipliers[reserve_asset];
 		}
 		else
-			full_prices[shares_asset] = unit_prices[shares_asset] = 0;
+			gbDisplayPrices[shares_asset] = gbSmallestUnitPrices[shares_asset] = 0;
 	}
 
 	// interest/stable arbs
@@ -97,12 +97,12 @@ async function updatePrices() {
 			if (!shares_supply)
 				throw Error(`no shares supply of interest arb ${aa}`);
 		
-			unit_prices[shares_asset] = total_value / shares_supply;
-			if (unit_multipliers[interest_asset])
-				full_prices[shares_asset] = unit_prices[shares_asset] * unit_multipliers[interest_asset];
+			gbSmallestUnitPrices[shares_asset] = total_value / shares_supply;
+			if (unitMultipliers[interest_asset])
+				gbDisplayPrices[shares_asset] = gbSmallestUnitPrices[shares_asset] * unitMultipliers[interest_asset];
 		}
 		else
-			full_prices[shares_asset] = unit_prices[shares_asset] = 0;
+			gbDisplayPrices[shares_asset] = gbSmallestUnitPrices[shares_asset] = 0;
 	}
 
 	// oswap pool assets
@@ -125,7 +125,7 @@ async function updatePrices() {
 		if (!shares_supply)
 			throw Error(`no supply for pool share asset ${shares_asset}`);
 		
-		full_prices[shares_asset] = unit_prices[shares_asset] = total_value / shares_supply;
+		gbDisplayPrices[shares_asset] = gbSmallestUnitPrices[shares_asset] = total_value / shares_supply;
 	}
 
 	// convert to USD
@@ -137,14 +137,14 @@ async function updatePrices() {
 		notifications.notifyAdmin("error from cryptocompare", e.message);
 		return false;
 	}
-	for (let asset in unit_prices)
-		usd_prices[asset] = unit_prices[asset] * gb_rate;
-	for (let asset in full_prices)
-		usd_full_prices[asset] = full_prices[asset] * gb_rate;
+	for (let asset in gbSmallestUnitPrices)
+		usdSmallestUnitPrices[asset] = gbSmallestUnitPrices[asset] * gb_rate;
+	for (let asset in gbDisplayPrices)
+		usdDisplayPrices[asset] = gbDisplayPrices[asset] * gb_rate;
 	
 	return true;
 }
 
 exports.updatePrices = updatePrices;
 exports.getUsdPrices = getUsdPrices;
-exports.getUsdFullPrices = getUsdFullPrices;
+exports.getUsdDisplayPrices = getUsdDisplayPrices;

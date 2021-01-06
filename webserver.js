@@ -106,7 +106,7 @@ router.get('/users', async (ctx) => {
 
 router.get('/prices', async (ctx) => {
 	console.error('prices', ctx.params);
-	const data = assetPrices.getUsdFullPrices();
+	const data = assetPrices.getUsdDisplayPrices();
 	ctx.body = {
 		status: 'success',
 		data
