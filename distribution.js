@@ -245,8 +245,11 @@ async function buyRewardAsset(total_rewards_in_smallest_inits) {
 	}
 	eventBus.once('aa_response_to_unit-' + unit, objAAResponse => {
 		console.log(`got response to our IUSD purchase`);
-		if (objAAResponse.bounced)
-			return console.log(`trigger ${unit} bounced: ${objAAResponse.response.error}`);
+		if (objAAResponse.bounced) {
+			console.log(`trigger ${unit} bounced: ${objAAResponse.response.error}`);
+			notifications.notifyAdmin("IUSD purchase bounced", objAAResponse.response.error);
+			return;
+		}
 		distributeIfReady();
 	});
 	return false;
