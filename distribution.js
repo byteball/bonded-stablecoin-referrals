@@ -220,17 +220,21 @@ async function buyRewardAsset(total_rewards_in_smallest_inits) {
 		console.log(`already buying IUSD in unit ${rows[0].unit}`);
 		return false;
 	}
-	let res = await dag.executeGetter(conf.iusd_curve_aa, 'get_exchange_result', [0, needed_amount]);
-	console.log('expected result', res);
-	if (res.fee_percent > conf.max_fee) {
-		console.log(`fee would be ${res.fee_percent}%`);
-		needed_amount = Math.ceil(needed_amount / 2);
-		res = await dag.executeGetter(conf.iusd_curve_aa, 'get_exchange_result', [0, needed_amount]);
-		console.log('expected result from half purchase', res);
-		if (res.fee_percent > conf.max_fee) {
-			console.log(`fee from half purchase would be ${res.fee_percent}%`);
-			return false;
+	let res;
+	const findAmount = async () => {
+		for (let i = 0; i < 10; i++) {
+			res = await dag.executeGetter(conf.iusd_curve_aa, 'get_exchange_result', [0, needed_amount]);
+			console.log(`${i}: expected result from purchasing ${needed_amount}`, res);
+			if (res.fee_percent <= conf.max_fee)
+				return true;
+			console.log(`${i}: fee would be ${res.fee_percent}%`);
+			needed_amount = Math.ceil(needed_amount / 2);
 		}
+		return false;
+	};
+	if (!(await findAmount())) {
+		console.log(`can't buy with reasonable fee`);
+		return false;
 	}
 	// add 1% for volatility
 	const amount = Math.ceil(res.reserve_needed * 1.01);
