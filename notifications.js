@@ -8,7 +8,7 @@ function notifyAdmin(subject, body) {
 	mail.sendmail({
 		to: conf.admin_email,
 		from: conf.from_email,
-		subject: subject,
+		subject: 'referrals: ' + subject,
 		body: body
 	});
 }
