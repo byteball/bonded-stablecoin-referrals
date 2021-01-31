@@ -44,7 +44,9 @@ async function getSuspendedReferrers(conn) {
 
 async function updateRewards() {
 	console.log('updateRewards');
-	const unlock = await mutex.lock(['updateRewards']);
+	const unlock = await mutex.lockOrSkip(['updateRewards']);
+	if (!unlock)
+		return console.log('skipping updateRewards');
 	const finish = (err) => {
 		console.log(err);
 		unlock();
