@@ -5,6 +5,7 @@ const dag = require('aabot/dag.js');
 const notifications = require('./notifications.js');
 const cryptocompare = require('./cryptocompare.js');
 const fetch = require('node-fetch');
+const AbortController = require('abort-controller');
 
 const assets = require('./assets.js');
 
@@ -28,14 +29,21 @@ function getUsdDisplayPrices() {
 
 async function updatePrices() {
 	// stablecoin tokens (T1, T2, stable)
+	const controller = new AbortController();
+	const timeout = setTimeout(() => {
+		controller.abort();
+	}, 60 * 1000);
 	try {
-		var trading_data = await (await fetch(conf.assets_data_url)).json();
+		var trading_data = await (await fetch(conf.assets_data_url, { signal: controller.signal })).json();
 		console.log(`got trading data`, JSON.stringify(trading_data, null, 2));
 	}
 	catch (e) {
 		console.log("error when fetching " + e.message);
 		notifications.notifyAdmin("error when fetching " + conf.assets_data_url, e.message);
 		return false;
+	}
+	finally {
+		clearTimeout(timeout);
 	}
 	for (let symbol in trading_data) {
 		const asset = trading_data[symbol].asset_id;
