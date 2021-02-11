@@ -39,7 +39,7 @@ async function updatePrices() {
 	}
 	catch (e) {
 		console.log("error when fetching " + e.message);
-		notifications.notifyAdmin("error when fetching " + conf.assets_data_url, e.message);
+		notifications.notifyAdmin("referrals: error when fetching " + conf.assets_data_url, e.message);
 		return false;
 	}
 	finally {
