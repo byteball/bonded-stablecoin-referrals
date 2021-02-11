@@ -99,6 +99,10 @@ async function getBalance(address) {
 				aa_balance_details[asset] = { balance: aa_balances[asset], eligible: false };
 			continue;
 		}
+		if (!balances[asset]) {
+			console.log(`ignoring 0 balance in asset ${asset}`);
+			continue;
+		}
 		if (!usd_prices[asset])
 			throw Error(`USD price of asset ${asset} is not known`);
 		usd_balance += balances[asset] * usd_prices[asset];
