@@ -92,6 +92,8 @@ async function addInterestArbAAs() {
 		await addInterestArbAA(row.address, row.definition);
 }
 
+const isEligibleForOswap = asset => asset === 'base' || primaryAssets.includes(asset);
+
 async function addOswapAAs() {
 	const vars = await dag.readAAStateVars(conf.oswap_factory_aa, 'pools.');
 	for (let var_name in vars) {
@@ -99,7 +101,7 @@ async function addOswapAAs() {
 		const asset0 = vars[`pools.${aa}.asset0`];
 		const asset1 = vars[`pools.${aa}.asset1`];
 		const asset = vars[`pools.${aa}.asset`];
-		if (!primaryAssets.includes(asset0) && !primaryAssets.includes(asset1)) {
+		if (!isEligibleForOswap(asset0) || !isEligibleForOswap(asset1)) {
 			console.log(`skipping oswap var ${var_name} as its asset is not a primary asset`);
 			continue;
 		}
