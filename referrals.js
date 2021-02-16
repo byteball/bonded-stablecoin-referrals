@@ -36,7 +36,21 @@ async function onAAResponse(objAAResponse) {
 		console.log(`attempt to set an AA as referrer ${ref} in trigger ` + objAAResponse.trigger_unit);
 		ref = null;
 	}
-	await db.query(`INSERT ${db.getIgnore()} INTO users (address, referrer_address, first_unit) VALUES (?, ?, ?)`, [trigger_address, ref, objAAResponse.trigger_unit]);
+	let user_address = trigger_address;
+
+	// check if the request comes from buffer AA
+	const sender_definition = await dag.readAADefinition(trigger_address);
+	if (sender_definition && sender_definition[1].base_aa === conf.buffer_base_aa) {
+		user_address = sender_definition[1].params.address;
+		if (!validationUtils.isValidAddress(user_address))
+			throw Error(`bad address in buffer AA ${trigger_address}`);
+		if (ref === user_address) {
+			console.log(`attempt to self-refer through buffer ${trigger_address} by ${ref} in trigger ` + objAAResponse.trigger_unit);
+			ref = null;		
+		}
+	}
+	
+	await db.query(`INSERT ${db.getIgnore()} INTO users (address, referrer_address, first_unit) VALUES (?, ?, ?)`, [user_address, ref, objAAResponse.trigger_unit]);
 }
 
 async function rescan() {
