@@ -75,7 +75,7 @@ router.get('/distributions/:distribution_id', async (ctx) => {
 	if (id !== 'next' && !id.match(/^\d+$/))
 		return setError(ctx, `invalid distribution_id: ${id}`);
 	
-	const [{ distribution_id, snapshot_time, distribution_date }] = await db.query(`SELECT distribution_id, snapshot_time, distribution_date FROM distributions ${id === 'next' ? 'ORDER BY distribution_id DESC LIMIT 1' : 'WHERE distribution_id=' + db.escape(id)}`);
+	const [{ distribution_id, snapshot_time, distribution_date, total_unscaled_rewards, total_rewards }] = await db.query(`SELECT * FROM distributions ${id === 'next' ? 'ORDER BY distribution_id DESC LIMIT 1' : 'WHERE distribution_id=' + db.escape(id)}`);
 	if (!distribution_id)
 		return setError(ctx, `no such distribution_id: ${id}`);
 	
@@ -87,6 +87,8 @@ router.get('/distributions/:distribution_id', async (ctx) => {
 			last_updated: snapshot_time,
 			distribution_id,
 			distribution_date,
+			total_unscaled_rewards,
+			total_rewards,
 			balances,
 			rewards,
 		}
