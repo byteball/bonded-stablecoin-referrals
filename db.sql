@@ -16,8 +16,8 @@ CREATE TABLE IF NOT EXISTS suspended_referrers (
 CREATE TABLE IF NOT EXISTS distributions (
 	distribution_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 	total_usd_balance DECIMAL(15, 4) NULL, -- including unreferred users
-	total_unscaled_rewards DECIMAL(15, 4) NULL, -- in IUSD
-	total_rewards DECIMAL(15, 4) NULL, -- in IUSD
+	total_unscaled_rewards DECIMAL(15, 4) NULL, -- in USD
+	total_rewards DECIMAL(15, 4) NULL, -- in USD
 	is_frozen TINYINT NOT NULL DEFAULT 0,
 	bought_reward_asset TINYINT NOT NULL DEFAULT 0,
 	is_completed TINYINT NOT NULL DEFAULT 0,
