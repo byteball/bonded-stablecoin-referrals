@@ -102,10 +102,16 @@ async function updatePrices() {
 			const total_value = (balances[interest_asset] + balance_in_challenging_period) * getAssetPrice(interest_asset);
 
 			const shares_supply = await dag.readAAStateVar(aa, "shares_supply");
-			if (!shares_supply)
+			if (!shares_supply) {
+				if (total_value === 0) {
+					console.log(`no shares and no assets in interest arb ${aa}`);
+					continue;
+				}
 				throw Error(`no shares supply of interest arb ${aa}`);
-		
+			}
+
 			gbSmallestUnitPrices[shares_asset] = total_value / shares_supply;
+			console.log(`interest arb ${aa} shares asset ${shares_asset} price ${gbSmallestUnitPrices[shares_asset]}`);
 			if (unitMultipliers[interest_asset])
 				gbDisplayPrices[shares_asset] = gbSmallestUnitPrices[shares_asset] * unitMultipliers[interest_asset];
 		}

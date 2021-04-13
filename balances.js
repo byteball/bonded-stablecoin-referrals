@@ -104,7 +104,7 @@ async function getBalance(address) {
 			continue;
 		}
 		if (!usd_prices[asset])
-			throw Error(`USD price of asset ${asset} is not known`);
+			throw Error(`USD price of asset ${asset} is not known, address ${address}`);
 		usd_balance += balances[asset] * usd_prices[asset];
 		if (wallet_balances[asset])
 			wallet_balance_details[asset] = {
