@@ -103,7 +103,7 @@ async function getBalance(address) {
 			console.log(`ignoring 0 balance in asset ${asset}`);
 			continue;
 		}
-		if (!usd_prices[asset])
+		if (usd_prices[asset] === undefined)
 			throw Error(`USD price of asset ${asset} is not known, address ${address}`);
 		usd_balance += balances[asset] * usd_prices[asset];
 		if (wallet_balances[asset])
