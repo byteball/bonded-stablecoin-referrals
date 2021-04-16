@@ -19,7 +19,12 @@ let governanceAAs = {};
 async function addCurveAA(aa) {
 	referrals.addCurveAA(aa);
 	const vars = await dag.readAAStateVars(aa, '');
-	governanceAAs[aa] = { asset: vars.asset1 };
+	let voting_asset;
+	if (vars.fund_aa) // v2
+		voting_asset = await dag.readAAStateVar(vars.fund_aa, 'shares_asset');
+	else // v1
+		voting_asset = vars.asset1;
+	governanceAAs[vars.governance_aa] = { asset: voting_asset };
 	primaryAssets.push(vars.asset1, vars.asset2);
 }
 
@@ -28,8 +33,19 @@ async function addDepositAA(aa) {
 	primaryAssets.push(asset);
 }
 
+async function addStableAA(aa) {
+	const asset = await dag.readAAStateVar(aa, 'asset');
+	primaryAssets.push(asset);
+}
+
+async function addFundAA(aa) {
+	const fund_shares_asset = await dag.readAAStateVar(aa, 'shares_asset');
+	primaryAssets.push(fund_shares_asset);
+}
+
 async function addT1ArbAA(aa, definition) {
-	const shares_asset = await dag.readAAStateVar(aa, 'shares_asset');
+	const vars = await dag.readAAStateVars(aa, '');
+	const shares_asset = vars.shares_asset;
 	const curve_aa = definition[1].params.curve_aa;
 	const curve_definition_rows = await aa_addresses.readAADefinitions([curve_aa]);
 	const curve_definition = JSON.parse(curve_definition_rows[0].definition);
@@ -44,7 +60,7 @@ async function addT1ArbAA(aa, definition) {
 		reserve_asset: curve_params.reserve_asset || 'base',
 		asset1,
 	};
-	governanceAAs[aa] = { asset: shares_asset };
+	governanceAAs[vars.governance_aa] = { asset: shares_asset };
 }
 
 async function addInterestArbAA(aa, definition) {
@@ -78,6 +94,20 @@ async function addDepositAAs() {
 	const aas = rows.map(row => row.address);
 	for (let aa of aas)
 		await addDepositAA(aa);
+}
+
+async function addStableAAs() {
+	const rows = await dag.getAAsByBaseAAs([conf.stable_base_aa]);
+	const aas = rows.map(row => row.address);
+	for (let aa of aas)
+		await addStableAA(aa);
+}
+
+async function addFundAAs() {
+	const rows = await dag.getAAsByBaseAAs([conf.fund_base_aa]);
+	const aas = rows.map(row => row.address);
+	for (let aa of aas)
+		await addFundAA(aa);
 }
 
 async function addT1ArbAAs() {
@@ -124,6 +154,8 @@ async function addOswapAAs() {
 async function start() {
 	await addCurveAAs();
 	await addDepositAAs();
+	await addStableAAs();
+	await addFundAAs();
 	await addT1ArbAAs();
 	await addInterestArbAAs();
 	await addOswapAAs();
@@ -136,6 +168,10 @@ async function start() {
 			await addCurveAA(payload.address);
 		else if (base_aa === conf.deposit_base_aa)
 			await addDepositAA(payload.address);
+		else if (base_aa === conf.stable_base_aa)
+			await addStableAA(payload.address);
+		else if (base_aa === conf.fund_base_aa)
+			await addFundAA(payload.address);
 		else if (conf.t1_arb_base_aas.includes(base_aa))
 			await addT1ArbAA(payload.address, payload.definition);
 		else if (base_aa === conf.interest_arb_base_aa)
