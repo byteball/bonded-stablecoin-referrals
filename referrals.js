@@ -14,29 +14,28 @@ async function onAAResponse(objAAResponse) {
 	console.log(`onAAResponse`, objAAResponse);
 	if (objAAResponse.bounced)
 		return console.log('bounced trigger');
-	const aa_address = objAAResponse.aa_address;
-	const trigger_address = objAAResponse.trigger_address;
-	const objJoint = await dag.readJoint(objAAResponse.trigger_unit);
+	const { aa_address, trigger_address, trigger_initial_address, trigger_unit, trigger_initial_unit } = objAAResponse;
+	const objJoint = await dag.readJoint(trigger_initial_unit);
 	if (!objJoint)
-		throw Error("no trigger unit? " + objAAResponse.trigger_unit);
+		throw Error("no trigger unit? " + trigger_initial_unit);
 	const dataMessage = objJoint.unit.messages.find(m => m.app === 'data');
 	if (!dataMessage)
-		return console.log(`no data message in trigger ` + objAAResponse.trigger_unit);
+		return console.log(`no data message in initial trigger ` + trigger_initial_unit);
 	let ref = dataMessage.payload.ref || null;
 	if (ref && !validationUtils.isValidAddress(ref)) {
-		console.log(`ref ${ref} is not a valid address in trigger ` + objAAResponse.trigger_unit);
+		console.log(`ref ${ref} is not a valid address in trigger ` + trigger_initial_unit);
 		ref = null;
 	}
-	if (ref === trigger_address) {
-		console.log(`attempt to self-refer by ${ref} in trigger ` + objAAResponse.trigger_unit);
+	if (ref === trigger_initial_address) {
+		console.log(`attempt to self-refer by ${ref} in trigger ` + trigger_initial_unit);
 		ref = null;		
 	}
 	const rows = await db.query("SELECT 1 FROM aa_addresses WHERE address=?", [ref]);
 	if (rows.length > 0) {
-		console.log(`attempt to set an AA as referrer ${ref} in trigger ` + objAAResponse.trigger_unit);
+		console.log(`attempt to set an AA as referrer ${ref} in trigger ` + trigger_initial_unit);
 		ref = null;
 	}
-	let user_address = trigger_address;
+	let user_address = trigger_initial_address;
 
 	// check if the request comes from buffer AA
 	const sender_definition = await dag.readAADefinition(trigger_address);
@@ -45,12 +44,12 @@ async function onAAResponse(objAAResponse) {
 		if (!validationUtils.isValidAddress(user_address))
 			throw Error(`bad address in buffer AA ${trigger_address}`);
 		if (ref === user_address) {
-			console.log(`attempt to self-refer through buffer ${trigger_address} by ${ref} in trigger ` + objAAResponse.trigger_unit);
+			console.log(`attempt to self-refer through buffer ${trigger_address} by ${ref} in trigger ` + trigger_unit);
 			ref = null;		
 		}
 	}
 	
-	await db.query(`INSERT ${db.getIgnore()} INTO users (address, referrer_address, first_unit) VALUES (?, ?, ?)`, [user_address, ref, objAAResponse.trigger_unit]);
+	await db.query(`INSERT ${db.getIgnore()} INTO users (address, referrer_address, first_unit) VALUES (?, ?, ?)`, [user_address, ref, trigger_unit]);
 }
 
 async function rescan() {
