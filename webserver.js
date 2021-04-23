@@ -29,7 +29,7 @@ router.get('/referrals/:address', async (ctx) => {
 	console.error('referrals', ctx.params);
 	const address = ctx.params.address;
 	if (!ValidationUtils.isValidAddress(address))
-		return setError(ctx, "invalid user address");
+		return setError(ctx, "invalid user address " + address);
 	const [{ distribution_id, snapshot_time, distribution_date }] = await db.query(`SELECT distribution_id, snapshot_time, distribution_date FROM distributions ORDER BY distribution_id DESC LIMIT 1`);
 	let [my_info] = await db.query(
 		`SELECT users.address, referrer_address, usd_balance, reward_in_smallest_units, usd_reward, share

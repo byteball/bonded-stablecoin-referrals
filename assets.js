@@ -162,6 +162,7 @@ async function start() {
 	await addOswapAAs();
 	
 	eventBus.on('aa_definition_saved', async payload => {
+		console.log(`new AA ${payload.address}`);
 		const base_aa = payload.definition[1].base_aa;
 		if (!base_aa)
 			return console.log(`new non-parameterized AA ${payload.address}`);
