@@ -17,7 +17,7 @@ let governanceAAs = {};
 
 
 async function addCurveAA(aa) {
-	referrals.addCurveAA(aa);
+	referrals.watchAA(aa);
 	const vars = await dag.readAAStateVars(aa, '');
 	let voting_asset;
 	if (vars.fund_aa) // v2
@@ -39,6 +39,7 @@ async function addStableAA(aa) {
 }
 
 async function addFundAA(aa) {
+	referrals.watchAA(aa);
 	const fund_shares_asset = await dag.readAAStateVar(aa, 'shares_asset');
 	primaryAssets.push(fund_shares_asset);
 }

@@ -10,6 +10,7 @@ const { argv } = require('yargs');
 
 let aas = [];
 
+// look for refs in requests to curve AA and fund AA
 async function onAAResponse(objAAResponse) {
 	console.log(`onAAResponse`, objAAResponse);
 	if (objAAResponse.bounced)
@@ -60,8 +61,8 @@ async function rescan() {
 	console.log('=== done rescanning');
 }
 
-function addCurveAA(aa) {
-	console.log(`will watch for responses from curve AA ${aa}`);
+function watchAA(aa) {
+	console.log(`will watch for responses from AA ${aa}`);
 	aas.push(aa);
 	eventBus.on('aa_response_from_aa-' + aa, onAAResponse);
 	if (conf.bLight)
@@ -87,5 +88,5 @@ async function start() {
 }
 
 
-exports.addCurveAA = addCurveAA;
+exports.watchAA = watchAA;
 exports.start = start;
