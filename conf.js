@@ -51,8 +51,8 @@ exports.liquidity_mining_aa = '7AUBFK4YAUGUF3RWWYRFXXF7BBWY2V7Y';
 exports.bank_aa = 'GV5YXIIRH3DH5FTEECW7IS2EQTAYJJ6S';
 exports.odex_aa = 'FVRZTCFXIDQ3EYRGQSLE5AMWUQF4PRYJ';
 
-exports.iusd_curve_aa = process.env.testnet ? '7FSSFG2Y5QHQTKVRFB3VWL6UNX3WB36O' : '26XAPPPTTYRIOSYNCUV3NS2H57X5LZLJ';
-exports.iusd_asset = process.env.testnet ? 'y6rgKvNV6CD1fa4PkfB28rSuje1l+DS70XWXBCzaSm4=' : '9V8nZuKfa8T3Hr1+40SXkkPeCS6w1+xkRFg4iqk9hws=';
+exports.iusd_curve_aa = process.env.testnet ? '7FSSFG2Y5QHQTKVRFB3VWL6UNX3WB36O' : 'VLKI3XMMX5YULOBA6ZXBXDPI6TXF6V3D';
+exports.iusd_asset = process.env.testnet ? 'y6rgKvNV6CD1fa4PkfB28rSuje1l+DS70XWXBCzaSm4=' : 'eCpmov+r6LOVNj8KD0EWTyfKPrqsG3i2GgxV4P+zE6A=';
 
 exports.assets_data_url = process.env.testnet ? "https://testnet-data.ostable.org/api/v1/assets" : "https://data.ostable.org/api/v1/assets";
 
