@@ -15,6 +15,7 @@ const dag = require('aabot/dag.js');
 const notifications = require('./notifications.js');
 const assetPrices = require('./asset_prices.js');
 const balances = require('./balances.js');
+const assets = require('./assets.js');
 
 let bPaymentFailedNotified = false;
 
@@ -67,7 +68,7 @@ async function updateRewards() {
 	let total_unscaled_rewards = 0;
 	let total_balance = 0; // including unreferred users
 	let balancesByAddress = {};
-	const rows = await db.query("SELECT address, referrer_address FROM users");
+	const rows = await db.query("SELECT address, referrer_address FROM users WHERE address NOT IN(" + assets.aas.map(db.quote).join(', ') + ")");
 	for (let { address } of rows)
 		balancesByAddress[address] = await balances.getBalance(address);
 	

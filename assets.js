@@ -14,9 +14,11 @@ let oswapPools = {};
 let t1Arbs = {};
 let interestArbs = {};
 let governanceAAs = {};
+let aas = [];
 
 
 async function addCurveAA(aa) {
+	aas.push(aa);
 	referrals.watchAA(aa);
 	const vars = await dag.readAAStateVars(aa, '');
 	let voting_asset;
@@ -29,22 +31,26 @@ async function addCurveAA(aa) {
 }
 
 async function addDepositAA(aa) {
+	aas.push(aa);
 	const asset = await dag.readAAStateVar(aa, 'asset');
 	primaryAssets.push(asset);
 }
 
 async function addStableAA(aa) {
+	aas.push(aa);
 	const asset = await dag.readAAStateVar(aa, 'asset');
 	primaryAssets.push(asset);
 }
 
 async function addFundAA(aa) {
+	aas.push(aa);
 	referrals.watchAA(aa);
 	const fund_shares_asset = await dag.readAAStateVar(aa, 'shares_asset');
 	primaryAssets.push(fund_shares_asset);
 }
 
 async function addT1ArbAA(aa, definition) {
+	aas.push(aa);
 	const vars = await dag.readAAStateVars(aa, '');
 	const shares_asset = vars.shares_asset;
 	const curve_aa = definition[1].params.curve_aa;
@@ -66,6 +72,7 @@ async function addT1ArbAA(aa, definition) {
 
 async function addInterestArbAA(aa, definition) {
 	console.error('--- addInterestArbAA', aa, definition[1])
+	aas.push(aa);
 	const shares_asset = await dag.readAAStateVar(aa, 'shares_asset');
 	const deposit_aa = definition[1].params.deposit_aa;
 	const deposit_params = await dag.readAAParams(deposit_aa);
@@ -143,6 +150,7 @@ async function addOswapAAs() {
 			continue;
 		}
 		console.log(`adding oswap pool asset ${asset} on AA ${aa}`);
+		aas.push(aa);
 		oswapAssets.push(asset);
 		oswapPools[aa] = {
 			asset0,
@@ -192,3 +200,4 @@ exports.oswapPools = oswapPools;
 exports.t1Arbs = t1Arbs;
 exports.interestArbs = interestArbs;
 exports.governanceAAs = governanceAAs;
+exports.aas = aas;
