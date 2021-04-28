@@ -131,7 +131,15 @@ async function updatePrices() {
 			continue;
 		}
 		
-		const total_value = balances[asset0] * getAssetPrice(asset0) + balances[asset1] * getAssetPrice(asset1);
+		let total_value = 0;
+		try {
+			total_value = balances[asset0] * getAssetPrice(asset0) + balances[asset1] * getAssetPrice(asset1);
+		}
+		catch (err) {
+			console.log(err);
+			continue;
+		}
+
 		if (!total_value)
 			throw Error(`total_value of pool ${aa}: ${total_value}`);
 		
