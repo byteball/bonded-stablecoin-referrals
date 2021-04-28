@@ -68,7 +68,7 @@ async function updateRewards() {
 	let total_unscaled_rewards = 0;
 	let total_balance = 0; // including unreferred users
 	let balancesByAddress = {};
-	const rows = await db.query("SELECT address, referrer_address FROM users WHERE address NOT IN(" + assets.aas.map(db.quote).join(', ') + ")");
+	const rows = await db.query("SELECT address, referrer_address FROM users WHERE address NOT IN(" + assets.aas.map(db.escape).join(', ') + ")");
 	for (let { address } of rows)
 		balancesByAddress[address] = await balances.getBalance(address);
 	
