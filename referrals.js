@@ -15,7 +15,13 @@ async function onAAResponse(objAAResponse) {
 	console.log(`onAAResponse`, objAAResponse);
 	if (objAAResponse.bounced)
 		return console.log('bounced trigger');
-	const { aa_address, trigger_address, trigger_initial_address, trigger_unit, trigger_initial_unit } = objAAResponse;
+	let { aa_address, trigger_address, trigger_initial_address, trigger_unit, trigger_initial_unit } = objAAResponse;
+	if (conf.bLight) {
+		if (!trigger_initial_unit)
+			trigger_initial_unit = trigger_unit;
+		if (!trigger_initial_address)
+			trigger_initial_address = trigger_address;
+	}
 	const objJoint = await dag.readJoint(trigger_initial_unit);
 	if (!objJoint)
 		throw Error("no trigger unit? " + trigger_initial_unit);
