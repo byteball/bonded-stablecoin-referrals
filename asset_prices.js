@@ -107,7 +107,9 @@ async function updatePrices() {
 					console.log(`no shares and no assets in interest arb ${aa}`);
 					continue;
 				}
-				throw Error(`no shares supply of interest arb ${aa}`);
+				console.log(`no shares in interest arb ${aa}`);
+				continue;
+			//	throw Error(`no shares supply of interest arb ${aa}`);
 			}
 
 			gbSmallestUnitPrices[shares_asset] = total_value / shares_supply;
