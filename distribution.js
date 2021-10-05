@@ -52,13 +52,13 @@ async function updateRewards() {
 		console.log(err);
 		unlock();
 	};
+	if (!await assetPrices.updatePrices())
+		return finish("failed to update prices");
+	
 	let distribution_id = await getCurrentDistributionId();
 	if (!distribution_id)
 		return finish("distributing now");
 
-	if (!await assetPrices.updatePrices())
-		return finish("failed to update prices");
-	
 	const growth_factor = await dag.executeGetter(conf.iusd_curve_aa, 'get_growth_factor');
 
 	await balances.updateBalancesInAAs();
