@@ -247,9 +247,12 @@ async function buyRewardAsset(total_rewards_in_smallest_inits) {
 		data: { tokens2: needed_amount },
 	});
 	if (!unit) {
-		console.log(`failed to send bytes to curve AA`);
+		const log = bPaymentFailedNotified ? console.log : notifications.notifyAdmin;
+		log(`failed to send bytes to curve AA`);
+		bPaymentFailedNotified = true;
 		return false;
 	}
+	bPaymentFailedNotified = false;
 	eventBus.once('aa_response_to_unit-' + unit, objAAResponse => {
 		console.log(`got response to our IUSD purchase`);
 		if (objAAResponse.bounced) {
