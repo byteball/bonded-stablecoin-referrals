@@ -54,6 +54,8 @@ exports.odex_aa = 'FVRZTCFXIDQ3EYRGQSLE5AMWUQF4PRYJ';
 exports.iusd_curve_aa = process.env.testnet ? '7FSSFG2Y5QHQTKVRFB3VWL6UNX3WB36O' : 'VLKI3XMMX5YULOBA6ZXBXDPI6TXF6V3D';
 exports.iusd_asset = process.env.testnet ? 'y6rgKvNV6CD1fa4PkfB28rSuje1l+DS70XWXBCzaSm4=' : 'eCpmov+r6LOVNj8KD0EWTyfKPrqsG3i2GgxV4P+zE6A=';
 
+exports.token_registry_address = "O6H6ZIFI57X3PLTYHOCVYPP5A553CYFQ"
+
 exports.assets_data_url = process.env.testnet ? "https://testnet-data.ostable.org/api/v1/assets" : "https://data.ostable.org/api/v1/assets";
 
 exports.daysBetweenDistributions = 7;

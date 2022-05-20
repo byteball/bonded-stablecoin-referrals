@@ -83,8 +83,8 @@ async function updatePrices() {
 				throw Error(`no shares supply of t1 arb ${aa}`);
 			}
 			gbSmallestUnitPrices[shares_asset] = total_value / shares_supply;
-			if (unitMultipliers[reserve_asset])
-				gbDisplayPrices[shares_asset] = gbSmallestUnitPrices[shares_asset] * unitMultipliers[reserve_asset];
+			const { decimals } = await getAssetInfo(shares_asset);
+			gbDisplayPrices[shares_asset] = gbSmallestUnitPrices[shares_asset] * 10 ** decimals;
 		}
 		else
 			gbDisplayPrices[shares_asset] = gbSmallestUnitPrices[shares_asset] = 0;
@@ -114,8 +114,8 @@ async function updatePrices() {
 
 			gbSmallestUnitPrices[shares_asset] = total_value / shares_supply;
 			console.log(`interest arb ${aa} shares asset ${shares_asset} price ${gbSmallestUnitPrices[shares_asset]}`);
-			if (unitMultipliers[interest_asset])
-				gbDisplayPrices[shares_asset] = gbSmallestUnitPrices[shares_asset] * unitMultipliers[interest_asset];
+			const { decimals } = await getAssetInfo(shares_asset);
+			gbDisplayPrices[shares_asset] = gbSmallestUnitPrices[shares_asset] * 10 ** decimals;
 		}
 		else
 			gbDisplayPrices[shares_asset] = gbSmallestUnitPrices[shares_asset] = 0;
@@ -159,6 +159,31 @@ async function updatePrices() {
 		usdDisplayPrices[asset] = gbDisplayPrices[asset] * gb_rate;
 	
 	return true;
+}
+
+let assetInfos = {};
+async function getAssetInfo(asset){
+	if (asset == 'base')
+		return { symbol: 'GBYTE', asset, decimals: 9 };
+	if (assetInfos[asset] && assetInfos[asset].expiry_ts > Date.now())
+		return assetInfos[asset];
+	const symbol = await dag.readAAStateVar(conf.token_registry_address, "a2s_" + asset);
+	if (!symbol) {
+		console.log(`no symbol for asset ` + asset);
+		assetInfos[asset] = { asset, decimals: 0, expiry_ts: Date.now() + 3600 * 1000 };
+		return assetInfos[asset];
+	}
+	const desc_hash = await dag.readAAStateVar(conf.token_registry_address, "current_desc_" + asset);
+	if (!desc_hash) {
+		console.log(`no desc_hash for ` + symbol);
+		assetInfos[asset] = { asset, decimals: 0, expiry_ts: Date.now() + 3600 * 1000 };
+		return assetInfos[asset];
+	}
+	const decimals = await dag.readAAStateVar(conf.token_registry_address, "decimals_" + desc_hash);
+	if (typeof decimals !== 'number')
+		throw Error(`no decimals for ` + symbol);
+	assetInfos[asset] = { symbol, asset, decimals, expiry_ts: Infinity };
+	return assetInfos[asset];
 }
 
 exports.updatePrices = updatePrices;
