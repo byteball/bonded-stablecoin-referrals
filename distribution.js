@@ -55,6 +55,8 @@ async function updateRewards() {
 	if (!await assetPrices.updatePrices())
 		return finish("failed to update prices");
 	
+	return unlock();
+	
 	let distribution_id = await getCurrentDistributionId();
 	if (!distribution_id)
 		return finish("distributing now");
@@ -267,7 +269,7 @@ async function buyRewardAsset(total_rewards_in_smallest_inits) {
 
 async function loop() {
 	await updateRewards();
-	await distributeIfReady();
+//	await distributeIfReady();
 }
 
 async function start() {
