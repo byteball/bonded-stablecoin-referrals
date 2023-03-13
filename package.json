@@ -22,6 +22,5 @@
     "yargs": "^16.1.0"
   },
   "resolutions": {
-    "level-rocksdb": "^4.0.0"
   }
 }
