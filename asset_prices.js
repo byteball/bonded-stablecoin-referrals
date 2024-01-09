@@ -3,7 +3,7 @@
 const conf = require('ocore/conf.js');
 const dag = require('aabot/dag.js');
 const notifications = require('./notifications.js');
-const cryptocompare = require('./cryptocompare.js');
+const coingecko = require('./coingecko.js');
 const fetch = require('node-fetch');
 const AbortController = require('abort-controller');
 
@@ -146,11 +146,11 @@ async function updatePrices() {
 
 	// convert to USD
 	try {
-		var gb_rate = await cryptocompare.fetchExchangeRate();
+		var gb_rate = await coingecko.fetchExchangeRate();
 	}
 	catch (e) {
-		console.log("error from cryptocompare " + e.message);
-		notifications.notifyAdmin("error from cryptocompare", e.message);
+		console.log("error from coingecko " + e.message);
+		notifications.notifyAdmin("error from coingecko", e.message);
 		return false;
 	}
 	for (let asset in gbSmallestUnitPrices)
